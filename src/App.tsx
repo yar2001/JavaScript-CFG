@@ -1,13 +1,13 @@
 import { Dialog, Transition } from '@headlessui/react';
-import { Fragment, Suspense, useCallback, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { IoBook, IoBuild, IoInformation, IoPlay } from 'react-icons/io5';
-import ReactFlow, { Background, Controls, Node } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Subject } from 'rxjs';
 import typescript from 'typescript';
-import { CFGBlock, CFGData, CFGEdge, CFGNode, generateCFG, isCFGBlock } from './CFG';
+import { CFGData, generateCFG, isCFGBlock } from './CFG';
 import CodeEditor from './Editor';
 import Mermaid from './Mermaid';
+import { generateOutput } from './output';
 import { evalInSandbox, variableToConsoleText } from './Sandbox';
 import { defaultCode } from './template';
 import { TemplateSelector } from './TemplateSelector';
@@ -87,6 +87,8 @@ export function App() {
               <button
                 className="p-1 transition-colors rounded-md bg-blue-50 active:bg-blue-100"
                 onClick={() => {
+                  console.log(generateOutput(code));
+
                   const GlobalEnv = {
                     Math,
                     Function,
