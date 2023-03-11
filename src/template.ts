@@ -1,19 +1,22 @@
 export const defaultCode: Record<string, string> = {
-  foo: `function foo(){
+  foo: `function foo() {
     console.log('Hello JavaScript!');
+    foo2();
 }
 
-function foo2(){
+function foo2() {
     console.log('Hello Function 2!');
 }
 
 foo();`,
 
-  'for-loop': `// For loop with continue and break
+  'while-loop': `// While loop with continue and break
 function foo() {
     console.log('Hello JavaScript!');
-    for (let a = 1; a < 10; a++) {
-        console.log('Hello For loop!');
+    let a = 0;
+    while (a <= 10) {
+        console.log('Hello While loop!');
+        a++;
         if (a === 5) {
             a = 6;
             continue;
@@ -22,85 +25,52 @@ function foo() {
             a = 0;
             break;
         }
-        if (a === 11) {
-            throw new Error('What the hell')
-        }
     }
-    console.log('Goodbye For loop!');
+    console.log('Goodbye While loop!');
+}
+foo();`,
+
+  'do-while-loop': `function foo() {
+    console.log('Hello JavaScript!');
+    let a = 0;
+    do {
+        console.log('Hello Do While loop!');
+        a++;
+        if (a === 5) {
+            a = 6;
+            continue;
+        }
+        if (a === 9) {
+            a = 0;
+            break;
+        }
+    } while (a <= 10)
+    console.log('Goodbye Do While loop!');
+}
+foo();`,
+  'for-of-loop': `// For-of loop with continue and break
+function foo() {
+    console.log('Hello JavaScript!');
+    const arr = [1, 2, 3, 4, 5, 6, 7]
+    for (let a of arr) {
+        console.log('Hello For-of loop!');
+        console.log(a);
+    }
+    console.log('Goodbye For-of loop!');
 }
 foo();
 `,
+  'for-in-loop': `// The for in statement loops through the properties of an object.
+// It lets you access the keys and values of an object.
+let person = {
+  name: 'Alice',
+  age: 25,
+  city: 'New York'
+};
 
-  'async-try': `class file {
-    constructor(filename) {
-        this.filename = filename;
-        this.openState = false;
-    }
 
-    change(state) {
-        this.openState = state;
-    }
-
-    async getContent() {
-        return \`\${this.filename}: content, \${this.openState}\`
-    }
-}
-
-async function getFile1() {
-    return await "111";
-}
-
-async function getFile2() {
-    return await "222";
-}
-
-async function getObjClass() {
-    return await {
-        a: file,
-    }
-}
-
-async function getFalse() {
-    await false;
-}
-
-async function test() {
-    let f1 = new file(await getFile1());
-    let f2 = new ((await getObjClass()).a)(await getFile2());
-
-    f1.change(await getFalse());
-    f2.change(!(await getFalse()));
-
-    return [await f1.getContent(), await f2.getContent()]
-}
-
-test().then(console.log)`,
-
-  'nested-loops': `async function getData() {
-    return await 1;
-}
-
-async function test() {
-    let num = 1;
-
-    A: while (num > 1) {
-        num += await getData();
-        for (let i = 1; i < num; i++) {
-            if (i >= 10) {
-                continue A;
-            }
-        }
-        while (num < 5) {
-            if (num > 5) {
-                break;
-            } else {
-                break A;
-            }
-        }
-    }
-
-    return num;
-}
-
-getData().then(console.log)`,
+for (let key in person) {
+  let value = person[key];
+  console.log(key + ': ' + value);
+}`,
 };

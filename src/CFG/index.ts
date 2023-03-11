@@ -1,5 +1,27 @@
 import { first, Subject } from 'rxjs';
-import { Block, DoStatement, Expression, ForInStatement, ForOfStatement, ForStatement, isBreakStatement, isContinueStatement, isDoStatement, isExpressionStatement, isForInStatement, isForOfStatement, isForStatement, isFunctionDeclaration, isIfStatement, isReturnStatement, isThrowStatement, isWhileStatement, NodeArray, Statement, WhileStatement } from 'typescript';
+import {
+  Block,
+  DoStatement,
+  Expression,
+  ForInStatement,
+  ForOfStatement,
+  ForStatement,
+  isBreakStatement,
+  isContinueStatement,
+  isDoStatement,
+  isExpressionStatement,
+  isForInStatement,
+  isForOfStatement,
+  isForStatement,
+  isFunctionDeclaration,
+  isIfStatement,
+  isReturnStatement,
+  isThrowStatement,
+  isWhileStatement,
+  NodeArray,
+  Statement,
+  WhileStatement,
+} from 'typescript';
 
 export type CFGNode = {
   _id: string;
@@ -306,7 +328,7 @@ export function generateCFG(statements: NodeArray<Statement> | undefined): {
     if (isReturnStatement(statement)) {
       nodes.push({
         _id: nodeId,
-        text: 'return',
+        text: statement.getText(),
       });
       nextNodeId$.next(nodeId);
 
@@ -343,12 +365,7 @@ export function generateCFG(statements: NodeArray<Statement> | undefined): {
   return { nodes, edges, lastNodes: lastNodes };
 
   function solveLoop(
-    statement:
-      | WhileStatement
-      | ForStatement
-      | DoStatement
-      | ForInStatement
-      | ForOfStatement,
+    statement: WhileStatement | ForStatement | DoStatement | ForInStatement | ForOfStatement,
     condition: Expression,
     { onBodyNodes }: { onBodyNodes?: (nodes: CFGNode[]) => void } = {}
   ) {

@@ -1,13 +1,11 @@
-import { Transition, Dialog } from '@headlessui/react';
-import { useState, Fragment } from 'react';
 import { IoBook, IoBuild, IoInformation } from 'react-icons/io5';
 import { Route, RouterProvider, Routes } from 'react-router';
-import { createBrowserRouter, NavLink } from 'react-router-dom';
+import { createHashRouter, NavLink } from 'react-router-dom';
 import { AboutPage } from './pages/about';
 import { DocPage } from './pages/doc';
 import { HomePage } from './pages/home';
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   {
     path: '*',
     element: <Main />,
