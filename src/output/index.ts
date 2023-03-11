@@ -1,4 +1,4 @@
-import typescript from 'typescript';
+import { createSourceFile, ScriptTarget, ScriptKind } from 'typescript';
 import { CFGData, generateCFG, isCFGBlock } from '../CFG';
 
 export type OutputData = {
@@ -36,13 +36,7 @@ export function generateOutput(code: string): OutputData {
     data_dependency: {},
   };
 
-  const sourceFile = typescript.createSourceFile(
-    './src/index.ts',
-    code,
-    typescript.ScriptTarget.ES2016,
-    true,
-    typescript.ScriptKind.JS
-  );
+  const sourceFile = createSourceFile('./src/index.ts', code, ScriptTarget.ES2016, true, ScriptKind.JS);
 
   output.code_tokens = sourceFile.statements.map((statement) => {
     return statement.getText();

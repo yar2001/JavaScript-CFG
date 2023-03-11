@@ -1,9 +1,7 @@
-import { Dialog, Transition } from '@headlessui/react';
-
-import { Fragment, useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { IoPlay } from 'react-icons/io5';
 import { Subject } from 'rxjs';
-import typescript from 'typescript';
+import { createSourceFile, ScriptTarget, ScriptKind } from 'typescript';
 import { CFGData, generateCFG, isCFGBlock } from '../../CFG';
 import CodeEditor from '../../Editor';
 import Mermaid from '../../Mermaid';
@@ -24,13 +22,7 @@ export function HomePage() {
   }, []);
 
   const mermaidCode = useMemo(() => {
-    const ast = typescript.createSourceFile(
-      './src/index.ts',
-      code,
-      typescript.ScriptTarget.ES2016,
-      true,
-      typescript.ScriptKind.JS
-    );
+    const ast = createSourceFile('./src/index.ts', code, ScriptTarget.ES2016, true, ScriptKind.JS);
 
     function drawCFG({ nodes, edges, lastNodes }: CFGData): string {
       let mermaidCode = '';

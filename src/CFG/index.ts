@@ -1,5 +1,5 @@
 import { first, Subject } from 'rxjs';
-import typescript from 'typescript';
+import { Block, DoStatement, Expression, ForInStatement, ForOfStatement, ForStatement, isBreakStatement, isContinueStatement, isDoStatement, isExpressionStatement, isForInStatement, isForOfStatement, isForStatement, isFunctionDeclaration, isIfStatement, isReturnStatement, isThrowStatement, isWhileStatement, NodeArray, Statement, WhileStatement } from 'typescript';
 
 export type CFGNode = {
   _id: string;
@@ -38,7 +38,7 @@ export function isCFGBlock(node: CFGNode): node is CFGBlock {
   return !!(node as CFGBlock).children;
 }
 
-export function generateCFG(statements: typescript.NodeArray<typescript.Statement> | undefined): {
+export function generateCFG(statements: NodeArray<Statement> | undefined): {
   nodes: CFGNode[];
   edges: CFGEdge[];
   lastNodes: LastNode[];
@@ -60,7 +60,7 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
 
     const nodeId = statement.pos.toString();
 
-    if (typescript.isExpressionStatement(statement)) {
+    if (isExpressionStatement(statement)) {
       const expression = statement.expression;
 
       nodes.push({
@@ -78,7 +78,7 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
       lastNodes.push({ _id: nodeId, type: LastNodeType.Normal });
       continue;
     }
-    if (typescript.isFunctionDeclaration(statement) && statement.body) {
+    if (isFunctionDeclaration(statement) && statement.body) {
       const bodyStatements = statement.body.statements;
       const block: CFGBlock = {
         _id: nodeId,
@@ -97,14 +97,14 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
       lastNodes.push({ _id: nodeId, type: LastNodeType.Normal });
       continue;
     }
-    if (typescript.isIfStatement(statement)) {
+    if (isIfStatement(statement)) {
       nodes.push({
         _id: nodeId,
         text: 'if: ' + statement.expression.getText(),
       });
       nextNodeId$.next(nodeId);
 
-      const thenStatements = (statement.thenStatement as typescript.Block).statements;
+      const thenStatements = (statement.thenStatement as Block).statements;
       const { nodes: thenNodes, edges: thenEdges, lastNodes: thenLastNodes } = generateCFG(thenStatements);
 
       if (thenNodes.length) {
@@ -132,7 +132,7 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
       }
 
       if (statement.elseStatement) {
-        const elseStatements = (statement.elseStatement as typescript.Block).statements;
+        const elseStatements = (statement.elseStatement as Block).statements;
         const { nodes: elseNodes, edges: elseEdges, lastNodes: elseLastNodes } = generateCFG(elseStatements);
 
         if (elseNodes.length) {
@@ -156,7 +156,7 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
       }
       continue;
     }
-    if (typescript.isForStatement(statement)) {
+    if (isForStatement(statement)) {
       const initializer = statement.initializer;
       if (!initializer) continue;
       nodes.push({
@@ -197,7 +197,7 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
       });
       continue;
     }
-    if (typescript.isWhileStatement(statement)) {
+    if (isWhileStatement(statement)) {
       const condition = statement.expression;
       if (!condition) continue;
       nodes.push({
@@ -217,7 +217,7 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
 
       continue;
     }
-    if (typescript.isDoStatement(statement)) {
+    if (isDoStatement(statement)) {
       const condition = statement.expression;
       if (!condition) continue;
 
@@ -245,7 +245,7 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
       });
       continue;
     }
-    if (typescript.isForInStatement(statement)) {
+    if (isForInStatement(statement)) {
       const expression = statement.expression;
       if (!expression) continue;
       nextNodeId$.next(expression.pos.toString());
@@ -264,7 +264,7 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
       });
       continue;
     }
-    if (typescript.isForOfStatement(statement)) {
+    if (isForOfStatement(statement)) {
       const expression = statement.expression;
       if (!expression) continue;
       nextNodeId$.next(expression.pos.toString());
@@ -283,7 +283,7 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
       });
       continue;
     }
-    if (typescript.isContinueStatement(statement)) {
+    if (isContinueStatement(statement)) {
       nodes.push({
         _id: nodeId,
         text: 'continue',
@@ -293,7 +293,7 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
       lastNodes.push({ _id: nodeId, type: LastNodeType.Continue });
       continue;
     }
-    if (typescript.isBreakStatement(statement)) {
+    if (isBreakStatement(statement)) {
       nodes.push({
         _id: nodeId,
         text: 'break',
@@ -303,7 +303,7 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
       lastNodes.push({ _id: nodeId, type: LastNodeType.Break });
       continue;
     }
-    if (typescript.isReturnStatement(statement)) {
+    if (isReturnStatement(statement)) {
       nodes.push({
         _id: nodeId,
         text: 'return',
@@ -313,7 +313,7 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
       lastNodes.push({ _id: nodeId, type: LastNodeType.Return });
       continue;
     }
-    if (typescript.isThrowStatement(statement)) {
+    if (isThrowStatement(statement)) {
       nodes.push({
         _id: nodeId,
         text: statement.getText(),
@@ -344,15 +344,15 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
 
   function solveLoop(
     statement:
-      | typescript.WhileStatement
-      | typescript.ForStatement
-      | typescript.DoStatement
-      | typescript.ForInStatement
-      | typescript.ForOfStatement,
-    condition: typescript.Expression,
+      | WhileStatement
+      | ForStatement
+      | DoStatement
+      | ForInStatement
+      | ForOfStatement,
+    condition: Expression,
     { onBodyNodes }: { onBodyNodes?: (nodes: CFGNode[]) => void } = {}
   ) {
-    const bodyStatements = (statement.statement as typescript.Block).statements;
+    const bodyStatements = (statement.statement as Block).statements;
     const { nodes: bodyNodes, edges: bodyEdges, lastNodes: bodyLastNodes } = generateCFG(bodyStatements);
 
     if (bodyNodes.length) {
