@@ -19,6 +19,9 @@ function foo() {
             a = 0;
             break;
         }
+        if (a === 11) {
+            throw new Error('What the hell')
+        }
     }
     console.log('Goodbye For loop!');
 }

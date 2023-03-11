@@ -26,6 +26,7 @@ enum LastNodeType {
   Continue = 'continue',
   Break = 'break',
   Return = 'return',
+  Throw = 'throw',
 }
 
 export interface LastNode {
@@ -55,7 +56,7 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
   for (let index = 0; index < statements.length; index++) {
     const statement = statements[index];
 
-    lastNodes = [];
+    lastNodes = lastNodes.filter((lastNode) => lastNode.type !== LastNodeType.Normal);
 
     const nodeId = statement.pos.toString();
 
@@ -174,12 +175,6 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
         begin: initializer.pos.toString(),
         end: condition.pos.toString(),
       });
-      nextNodeId$.pipe(first()).subscribe((nextId) => {
-        edges.push({
-          begin: condition.pos.toString(),
-          end: nextId,
-        });
-      });
 
       const incrementor = statement.incrementor;
       if (!incrementor) continue;
@@ -192,38 +187,14 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
         end: incrementor.pos.toString(),
       });
 
-      const bodyStatements = (statement.statement as typescript.Block).statements;
-      const { nodes: bodyNodes, edges: bodyEdges, lastNodes: bodyLastNodes } = generateCFG(bodyStatements);
-
-      if (bodyNodes.length) {
-        nodes.push(...bodyNodes);
-        edges.push(...bodyEdges);
-        edges.push({
-          begin: incrementor.pos.toString(),
-          end: bodyNodes[0]._id,
-        });
-        bodyLastNodes.forEach((bodyLastNode) => {
-          if (bodyLastNode.type === LastNodeType.Break) {
-            nextNodeId$.pipe(first()).subscribe((nextId) => {
-              edges.push({
-                begin: bodyLastNode._id,
-                end: nextId,
-              });
-            });
-            return;
-          }
-          if (bodyLastNode.type === LastNodeType.Return) {
-            return;
-          }
-
+      solveLoop(statement, condition, {
+        onBodyNodes(bodyNodes) {
           edges.push({
-            begin: bodyLastNode._id,
-            end: condition.pos.toString(),
+            begin: incrementor.pos.toString(),
+            end: bodyNodes[0]._id,
           });
-        });
-
-        lastNodes.push(...bodyLastNodes.filter((bodyLastNode) => bodyLastNode.type !== LastNodeType.Continue));
-      }
+        },
+      });
       continue;
     }
     if (typescript.isWhileStatement(statement)) {
@@ -235,25 +206,81 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
       });
       nextNodeId$.next(condition.pos.toString());
 
-      const bodyStatements = (statement.statement as typescript.Block).statements;
-      const { nodes: bodyNodes, edges: bodyEdges, lastNodes: bodyLastNodes } = generateCFG(bodyStatements);
-
-      if (bodyNodes.length) {
-        nodes.push(...bodyNodes);
-        edges.push(...bodyEdges);
-        edges.push({
-          begin: condition.pos.toString(),
-          end: bodyNodes[0]._id,
-        });
-        bodyLastNodes.forEach((bodyLastNode) => {
+      solveLoop(statement, condition, {
+        onBodyNodes(bodyNodes) {
           edges.push({
-            begin: bodyLastNode._id,
-            end: condition.pos.toString(),
+            begin: condition.pos.toString(),
+            end: bodyNodes[0]._id,
           });
-        });
+        },
+      });
 
-        lastNodes.push(...bodyLastNodes);
-      }
+      continue;
+    }
+    if (typescript.isDoStatement(statement)) {
+      const condition = statement.expression;
+      if (!condition) continue;
+
+      nodes.push({
+        _id: nodeId,
+        text: 'do',
+      });
+      nodes.push({
+        _id: condition.pos.toString(),
+        text: 'do while: ' + statement.expression?.getText() ?? '',
+      });
+      edges.push({
+        begin: condition.pos.toString(),
+        end: nodeId,
+      });
+      nextNodeId$.next(nodeId);
+
+      solveLoop(statement, condition, {
+        onBodyNodes(bodyNodes) {
+          edges.push({
+            begin: nodeId,
+            end: bodyNodes[0]._id,
+          });
+        },
+      });
+      continue;
+    }
+    if (typescript.isForInStatement(statement)) {
+      const expression = statement.expression;
+      if (!expression) continue;
+      nextNodeId$.next(expression.pos.toString());
+      nodes.push({
+        _id: expression.pos.toString(),
+        text: 'for: ' + statement.initializer?.getText() + ' in ' + statement.expression?.getText() ?? '',
+      });
+
+      solveLoop(statement, expression, {
+        onBodyNodes(bodyNodes) {
+          edges.push({
+            begin: expression.pos.toString(),
+            end: bodyNodes[0]._id,
+          });
+        },
+      });
+      continue;
+    }
+    if (typescript.isForOfStatement(statement)) {
+      const expression = statement.expression;
+      if (!expression) continue;
+      nextNodeId$.next(expression.pos.toString());
+      nodes.push({
+        _id: expression.pos.toString(),
+        text: 'for: ' + statement.initializer?.getText() + ' of ' + statement.expression?.getText() ?? '',
+      });
+
+      solveLoop(statement, expression, {
+        onBodyNodes(bodyNodes) {
+          edges.push({
+            begin: expression.pos.toString(),
+            end: bodyNodes[0]._id,
+          });
+        },
+      });
       continue;
     }
     if (typescript.isContinueStatement(statement)) {
@@ -286,6 +313,16 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
       lastNodes.push({ _id: nodeId, type: LastNodeType.Return });
       continue;
     }
+    if (typescript.isThrowStatement(statement)) {
+      nodes.push({
+        _id: nodeId,
+        text: statement.getText(),
+      });
+      nextNodeId$.next(nodeId);
+
+      lastNodes.push({ _id: nodeId, type: LastNodeType.Throw });
+      continue;
+    }
 
     nodes.push({
       _id: nodeId,
@@ -304,4 +341,57 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
 
   nextNodeId$.complete();
   return { nodes, edges, lastNodes: lastNodes };
+
+  function solveLoop(
+    statement:
+      | typescript.WhileStatement
+      | typescript.ForStatement
+      | typescript.DoStatement
+      | typescript.ForInStatement
+      | typescript.ForOfStatement,
+    condition: typescript.Expression,
+    { onBodyNodes }: { onBodyNodes?: (nodes: CFGNode[]) => void } = {}
+  ) {
+    const bodyStatements = (statement.statement as typescript.Block).statements;
+    const { nodes: bodyNodes, edges: bodyEdges, lastNodes: bodyLastNodes } = generateCFG(bodyStatements);
+
+    if (bodyNodes.length) {
+      onBodyNodes?.(bodyNodes);
+      nodes.push(...bodyNodes);
+      edges.push(...bodyEdges);
+
+      bodyLastNodes.forEach((bodyLastNode) => {
+        if (bodyLastNode.type === LastNodeType.Break) {
+          nextNodeId$.pipe(first()).subscribe((nextId) => {
+            edges.push({
+              begin: bodyLastNode._id,
+              end: nextId,
+            });
+          });
+          return;
+        }
+        if (bodyLastNode.type === LastNodeType.Return || bodyLastNode.type === LastNodeType.Throw) {
+          return;
+        }
+
+        edges.push({
+          begin: bodyLastNode._id,
+          end: condition.pos.toString(),
+        });
+      });
+
+      lastNodes.push(
+        ...bodyLastNodes.filter(
+          (bodyLastNode) => ![LastNodeType.Continue, LastNodeType.Break].includes(bodyLastNode.type)
+        )
+      );
+    }
+
+    nextNodeId$.pipe(first()).subscribe((nextId) => {
+      edges.push({
+        begin: condition.pos.toString(),
+        end: nextId,
+      });
+    });
+  }
 }
