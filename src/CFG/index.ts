@@ -38,7 +38,7 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
   const edges: CFGEdge[] = [];
   let lastNodeIds: string[] = [];
 
-  const nextNodeId$ = new Subject<string>();
+  const nextNodeId$ = new Subject<string>(); //when calling "next", it will notify last node current nodeId
 
   for (let index = 0; index < statements.length; index++) {
     const statement = statements[index];
@@ -85,7 +85,7 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
     if (typescript.isIfStatement(statement)) {
       nodes.push({
         _id: nodeId,
-        text: statement.expression.getText(),
+        text: 'if: ' + statement.expression.getText(),
       });
       nextNodeId$.next(nodeId);
 
@@ -131,6 +131,60 @@ export function generateCFG(statements: typescript.NodeArray<typescript.Statemen
           });
           lastNodeIds.push(...elseLastNodeIds);
         }
+      }
+    }
+    if (typescript.isForStatement(statement)) {
+      const initializer = statement.initializer!;
+      nodes.push({
+        _id: initializer.pos.toString(),
+        text: 'for: ' + statement.initializer?.getText() ?? '',
+      });
+      nextNodeId$.next(initializer.pos.toString());
+
+      const condition = statement.condition!;
+      nodes.push({
+        _id: condition.pos.toString(),
+        text: statement.condition?.getText() ?? '',
+      });
+      edges.push({
+        begin: initializer.pos.toString(),
+        end: condition.pos.toString(),
+      });
+      nextNodeId$.pipe(first()).subscribe((nextId) => {
+        edges.push({
+          begin: condition.pos.toString(),
+          end: nextId,
+        });
+      });
+
+      const incrementor = statement.incrementor!;
+      nodes.push({
+        _id: incrementor.pos.toString(),
+        text: statement.incrementor?.getText() ?? '',
+      });
+      edges.push({
+        begin: condition.pos.toString(),
+        end: incrementor.pos.toString(),
+      });
+
+      const bodyStatements = (statement.statement as typescript.Block).statements;
+      const { nodes: bodyNodes, edges: bodyEdges, lastNodeIds: bodyLastNodeIds } = generateCFG(bodyStatements);
+
+      if (bodyNodes.length) {
+        nodes.push(...bodyNodes);
+        edges.push(...bodyEdges);
+        edges.push({
+          begin: incrementor.pos.toString(),
+          end: bodyNodes[0]._id,
+        });
+        bodyLastNodeIds.forEach((bodyLastNodeId) => {
+          edges.push({
+            begin: bodyLastNodeId,
+            end: condition.pos.toString(),
+          });
+        });
+
+        lastNodeIds.push(...bodyLastNodeIds);
       }
     }
   }
