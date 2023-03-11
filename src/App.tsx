@@ -34,7 +34,7 @@ export function App() {
       typescript.ScriptKind.JS
     );
 
-    function drawCFG({ nodes, edges, lastNodeIds }: CFGData): string {
+    function drawCFG({ nodes, edges, lastNodes }: CFGData): string {
       let mermaidCode = '';
       nodes.forEach((node) => {
         if (isCFGBlock(node)) {
@@ -52,8 +52,8 @@ export function App() {
       if (nodes.length) {
         mermaidCode += `[*]-->${nodes[0]._id}\n`;
       }
-      lastNodeIds.forEach((id) => {
-        mermaidCode += `${id}-->[*]\n`;
+      lastNodes.forEach((node) => {
+        mermaidCode += `${node._id}-->[*]\n`;
       });
 
       return mermaidCode;

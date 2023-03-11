@@ -6,11 +6,19 @@ function foo(){
 foo();
 `,
 
-  'for-loop': `// test
+  'for-loop': `// For loop with continue and break
 function foo() {
     console.log('Hello JavaScript!');
     for (let a = 1; a < 10; a++) {
         console.log('Hello For loop!');
+        if (a === 5) {
+            a = 6;
+            continue;
+        }
+        if (a === 9) {
+            a = 0;
+            break;
+        }
     }
     console.log('Goodbye For loop!');
 }
