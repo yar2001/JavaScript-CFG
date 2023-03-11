@@ -1,10 +1,13 @@
 export const defaultCode: Record<string, string> = {
-  foo: `// test
-function foo(){
+  foo: `function foo(){
     console.log('Hello JavaScript!');
 }
-foo();
-`,
+
+function foo2(){
+    console.log('Hello Function 2!');
+}
+
+foo();`,
 
   'for-loop': `// For loop with continue and break
 function foo() {
