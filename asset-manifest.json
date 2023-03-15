@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/JavaScript-CFG/static/css/main.bd4a10b1.css",
-    "main.js": "/JavaScript-CFG/static/js/main.6a9e3445.js",
+    "main.css": "/JavaScript-CFG/static/css/main.254adff1.css",
+    "main.js": "/JavaScript-CFG/static/js/main.fb4ce500.js",
     "static/js/312.3fe88594.chunk.js": "/JavaScript-CFG/static/js/312.3fe88594.chunk.js",
     "static/js/4877.47bb2a24.chunk.js": "/JavaScript-CFG/static/js/4877.47bb2a24.chunk.js",
     "static/js/1074.e60ddc2c.chunk.js": "/JavaScript-CFG/static/js/1074.e60ddc2c.chunk.js",
@@ -91,8 +91,8 @@
     "editor.worker.js": "/JavaScript-CFG/editor.worker.js",
     "static/media/codicon.ttf": "/JavaScript-CFG/static/media/codicon.b797181c93b3755f4fa1.ttf",
     "index.html": "/JavaScript-CFG/index.html",
-    "main.bd4a10b1.css.map": "/JavaScript-CFG/static/css/main.bd4a10b1.css.map",
-    "main.6a9e3445.js.map": "/JavaScript-CFG/static/js/main.6a9e3445.js.map",
+    "main.254adff1.css.map": "/JavaScript-CFG/static/css/main.254adff1.css.map",
+    "main.fb4ce500.js.map": "/JavaScript-CFG/static/js/main.fb4ce500.js.map",
     "312.3fe88594.chunk.js.map": "/JavaScript-CFG/static/js/312.3fe88594.chunk.js.map",
     "4877.47bb2a24.chunk.js.map": "/JavaScript-CFG/static/js/4877.47bb2a24.chunk.js.map",
     "1074.e60ddc2c.chunk.js.map": "/JavaScript-CFG/static/js/1074.e60ddc2c.chunk.js.map",
@@ -177,7 +177,7 @@
     "7894.1dc41cdf.chunk.js.map": "/JavaScript-CFG/static/js/7894.1dc41cdf.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.bd4a10b1.css",
-    "static/js/main.6a9e3445.js"
+    "static/css/main.254adff1.css",
+    "static/js/main.fb4ce500.js"
   ]
 }
