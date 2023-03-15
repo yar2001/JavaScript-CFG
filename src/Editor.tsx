@@ -133,5 +133,5 @@ export default function CodeEditor({
     };
   }, [editor, getCode, onChange]);
 
-  return <div className="w-full h-full" ref={divRef}></div>;
+  return <div className="h-80 lg:h-full" ref={divRef}></div>;
 }

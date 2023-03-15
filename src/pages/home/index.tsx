@@ -53,8 +53,8 @@ export function HomePage() {
 
   return (
     <>
-      <div className="grid grid-rows-2 bg-gray-100 divide-y grow lg:grid-rows-1 lg:grid-cols-2 lg:divide-x ">
-        <div className="flex flex-col bg-white">
+      <div className="flex flex-col bg-gray-100 divide-y lg:grid grow lg:grid-rows-1 lg:grid-cols-2 lg:divide-x ">
+        <div className="flex flex-col overflow-y-auto bg-white lg:h-screen">
           <div className="flex items-center justify-between gap-2 px-3 py-1">
             <TemplateSelector
               onSelect={(name) => {
@@ -92,23 +92,19 @@ export function HomePage() {
             </button>
           </div>
           <CodeEditor noSemanticValidation value={code} onChange={onCodeChange} command$={editor$} />
-          <div className="flex flex-col border-t grow">
+          <div className="flex flex-col border-t">
             <div className="px-3 py-1 text-xs text-gray-800 select-none">Output</div>
-            <div className="h-24 px-3 overflow-y-scroll lg:h-56">
+            <div className="h-56 px-3 overflow-y-scroll">
               {consoleText.split('\n').map((text) => (
                 <p key={Math.random()}>{text}</p>
               ))}
             </div>
           </div>
         </div>
-        <div className="h-full overflow-auto bg-white">
+        <div className="h-full overflow-y-auto bg-white lg:h-screen">
           <ErrorBoundary>
             <Mermaid chart={mermaidCode} />
           </ErrorBoundary>
-          {/* <ReactFlow fitView nodes={nodes} edges={edges} proOptions={{ hideAttribution: true }}>
-              <Background />
-              <Controls />
-            </ReactFlow> */}
         </div>
       </div>
     </>
