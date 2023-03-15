@@ -87,7 +87,7 @@ export function generateCFG(statements: NodeArray<Statement> | undefined): {
 
       nodes.push({
         _id: nodeId,
-        text: expression.getText(),
+        text: expression.getText()?.replaceAll('"', "'"),
       });
 
       nextNodeId$.next(nodeId);
@@ -122,7 +122,7 @@ export function generateCFG(statements: NodeArray<Statement> | undefined): {
     if (isIfStatement(statement)) {
       nodes.push({
         _id: nodeId,
-        text: 'if: ' + statement.expression.getText(),
+        text: 'if: ' + statement.expression.getText()?.replaceAll('"', "'"),
       });
       nextNodeId$.next(nodeId);
 
@@ -183,7 +183,7 @@ export function generateCFG(statements: NodeArray<Statement> | undefined): {
       if (!initializer) continue;
       nodes.push({
         _id: initializer.pos.toString(),
-        text: 'for: ' + statement.initializer?.getText() ?? '',
+        text: 'for: ' + statement.initializer?.getText()?.replaceAll('"', "'") ?? '',
       });
       nextNodeId$.next(initializer.pos.toString());
 
@@ -191,7 +191,7 @@ export function generateCFG(statements: NodeArray<Statement> | undefined): {
       if (!condition) continue;
       nodes.push({
         _id: condition.pos.toString(),
-        text: 'for cond: ' + statement.condition?.getText() ?? '',
+        text: 'for cond: ' + statement.condition?.getText()?.replaceAll('"', "'") ?? '',
       });
       edges.push({
         begin: initializer.pos.toString(),
@@ -202,7 +202,7 @@ export function generateCFG(statements: NodeArray<Statement> | undefined): {
       if (!incrementor) continue;
       nodes.push({
         _id: incrementor.pos.toString(),
-        text: 'for inc: ' + statement.incrementor?.getText() ?? '',
+        text: 'for inc: ' + statement.incrementor?.getText()?.replaceAll('"', "'") ?? '',
       });
       edges.push({
         begin: condition.pos.toString(),
@@ -224,7 +224,7 @@ export function generateCFG(statements: NodeArray<Statement> | undefined): {
       if (!condition) continue;
       nodes.push({
         _id: condition.pos.toString(),
-        text: 'while: ' + statement.expression?.getText() ?? '',
+        text: 'while: ' + statement.expression?.getText()?.replaceAll('"', "'") ?? '',
       });
       nextNodeId$.next(condition.pos.toString());
 
@@ -249,7 +249,7 @@ export function generateCFG(statements: NodeArray<Statement> | undefined): {
       });
       nodes.push({
         _id: condition.pos.toString(),
-        text: 'do while: ' + statement.expression?.getText() ?? '',
+        text: 'do while: ' + statement.expression?.getText()?.replaceAll('"', "'") ?? '',
       });
       edges.push({
         begin: condition.pos.toString(),
@@ -273,7 +273,11 @@ export function generateCFG(statements: NodeArray<Statement> | undefined): {
       nextNodeId$.next(expression.pos.toString());
       nodes.push({
         _id: expression.pos.toString(),
-        text: 'for: ' + statement.initializer?.getText() + ' in ' + statement.expression?.getText() ?? '',
+        text:
+          'for: ' +
+            statement.initializer?.getText()?.replaceAll('"', "'") +
+            ' in ' +
+            statement.expression?.getText()?.replaceAll('"', "'") ?? '',
       });
 
       solveLoop(statement, expression, {
@@ -292,7 +296,11 @@ export function generateCFG(statements: NodeArray<Statement> | undefined): {
       nextNodeId$.next(expression.pos.toString());
       nodes.push({
         _id: expression.pos.toString(),
-        text: 'for: ' + statement.initializer?.getText() + ' of ' + statement.expression?.getText() ?? '',
+        text:
+          'for: ' +
+            statement.initializer?.getText()?.replaceAll('"', "'") +
+            ' of ' +
+            statement.expression?.getText()?.replaceAll('"', "'") ?? '',
       });
 
       solveLoop(statement, expression, {
@@ -328,7 +336,7 @@ export function generateCFG(statements: NodeArray<Statement> | undefined): {
     if (isReturnStatement(statement)) {
       nodes.push({
         _id: nodeId,
-        text: statement.getText(),
+        text: statement.getText()?.replaceAll('"', "'"),
       });
       nextNodeId$.next(nodeId);
 
@@ -338,7 +346,7 @@ export function generateCFG(statements: NodeArray<Statement> | undefined): {
     if (isThrowStatement(statement)) {
       nodes.push({
         _id: nodeId,
-        text: statement.getText(),
+        text: statement.getText()?.replaceAll('"', "'"),
       });
       nextNodeId$.next(nodeId);
 
@@ -348,7 +356,7 @@ export function generateCFG(statements: NodeArray<Statement> | undefined): {
 
     nodes.push({
       _id: nodeId,
-      text: statement.getText(),
+      text: statement.getText()?.replaceAll('"', "'"),
     });
 
     nextNodeId$.next(nodeId);

@@ -20,7 +20,7 @@ export function App() {
 function Main() {
   return (
     <>
-      <div className="flex flex-col w-screen h-screen overflow-hidden lg:flex-row">
+      <div className="flex flex-col w-screen min-h-screen overflow-hidden lg:flex-row">
         <div className="flex gap-2 px-2 py-2 bg-neutral-100 shrink-0 lg:flex-col">
           <NavLink
             to="/"
