@@ -1,7 +1,7 @@
 {
-  "name": "playground",
+  "name": "javascript-cfg",
   "version": "0.1.0",
-  "private": true,
+  "license": "MIT",
   "homepage": "https://yar2001.github.io/JavaScript-CFG",
   "dependencies": {
     "@babel/plugin-transform-block-scoping": "^7.18.6",
