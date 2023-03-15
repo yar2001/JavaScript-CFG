@@ -136,11 +136,14 @@ export function generateCFG(statements: NodeArray<Statement> | undefined): {
           begin: nodeId,
           end: thenNodes[0]._id,
         });
+
         nextNodeId$.pipe(first()).subscribe((nextId) => {
-          edges.push({
-            begin: nodeId,
-            end: nextId,
-          });
+          if (!statement.elseStatement) {
+            edges.push({
+              begin: nodeId,
+              end: nextId,
+            });
+          }
           thenLastNodes.forEach((thenLastNode) => {
             if (thenLastNode.type !== LastNodeType.Normal) return;
             edges.push({
@@ -149,7 +152,9 @@ export function generateCFG(statements: NodeArray<Statement> | undefined): {
             });
           });
         });
-        lastNodes.push({ _id: nodeId, type: LastNodeType.Normal });
+        if (!statement.elseStatement) {
+          lastNodes.push({ _id: nodeId, type: LastNodeType.Normal });
+        }
         lastNodes.push(...thenLastNodes);
       }
 
