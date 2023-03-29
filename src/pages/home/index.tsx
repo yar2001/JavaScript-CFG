@@ -24,6 +24,8 @@ export function HomePage() {
   const mermaidCode = useMemo(() => {
     const ast = createSourceFile('./src/index.ts', code, ScriptTarget.ES2016, true, ScriptKind.JS);
 
+    console.log(ast.statements);
+
     function drawCFG({ nodes, edges, lastNodes }: CFGData): string {
       let mermaidCode = '';
       nodes.forEach((node) => {
@@ -48,7 +50,7 @@ export function HomePage() {
 
       return mermaidCode;
     }
-    return 'stateDiagram-v2\n' + drawCFG(generateCFG(ast.statements));
+    return 'stateDiagram-v2\n' + drawCFG(generateCFG(ast));
   }, [code]);
 
   return (

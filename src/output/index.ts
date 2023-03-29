@@ -48,7 +48,7 @@ export function generateOutput(code: string): OutputData {
     output.docstring_tokens = docstring.split(' ');
   }
 
-  const { edges, lastNodes, nodes } = generateCFG(sourceFile.statements);
+  const { edges, lastNodes, nodes } = generateCFG(sourceFile);
 
   function generateCFGDependency(beginId: string, { nodes, edges, lastNodes }: CFGData) {
     nodes.forEach((node) => {

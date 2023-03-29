@@ -1,11 +1,15 @@
 import { first, Subject } from 'rxjs';
 import {
   Block,
+  createNodeArray,
   DoStatement,
   Expression,
+  ExpressionStatement,
+  factory,
   ForInStatement,
   ForOfStatement,
   ForStatement,
+  isBlock,
   isBreakStatement,
   isContinueStatement,
   isDoStatement,
@@ -18,6 +22,7 @@ import {
   isReturnStatement,
   isThrowStatement,
   isWhileStatement,
+  Node,
   NodeArray,
   Statement,
   WhileStatement,
@@ -60,14 +65,25 @@ export function isCFGBlock(node: CFGNode): node is CFGBlock {
   return !!(node as CFGBlock).children;
 }
 
-export function generateCFG(statements: NodeArray<Statement> | undefined): {
+export function generateCFG(astNode: Node | undefined): {
   nodes: CFGNode[];
   edges: CFGEdge[];
   lastNodes: LastNode[];
 } {
-  if (!statements) {
+  if (!astNode) {
     return { nodes: [], edges: [], lastNodes: [] };
   }
+
+  function getStatementsFromAstNode(astNode: Node): NodeArray<Statement> {
+    //@ts-expect-error
+    if (astNode.statements) {
+      //@ts-expect-error
+      return astNode.statements;
+    }
+
+    return factory.createNodeArray([astNode as Statement]);
+  }
+  const statements = getStatementsFromAstNode(astNode);
 
   const nodes: CFGNode[] = [];
   const edges: CFGEdge[] = [];
@@ -101,11 +117,10 @@ export function generateCFG(statements: NodeArray<Statement> | undefined): {
       continue;
     }
     if (isFunctionDeclaration(statement) && statement.body) {
-      const bodyStatements = statement.body.statements;
       const block: CFGBlock = {
         _id: nodeId,
         text: `function ${statement.name?.escapedText}`,
-        children: generateCFG(bodyStatements),
+        children: generateCFG(statement.body),
       };
 
       nodes.push(block);
@@ -126,8 +141,7 @@ export function generateCFG(statements: NodeArray<Statement> | undefined): {
       });
       nextNodeId$.next(nodeId);
 
-      const thenStatements = (statement.thenStatement as Block).statements;
-      const { nodes: thenNodes, edges: thenEdges, lastNodes: thenLastNodes } = generateCFG(thenStatements);
+      const { nodes: thenNodes, edges: thenEdges, lastNodes: thenLastNodes } = generateCFG(statement.thenStatement);
 
       if (thenNodes.length) {
         nodes.push(...thenNodes);
@@ -159,8 +173,7 @@ export function generateCFG(statements: NodeArray<Statement> | undefined): {
       }
 
       if (statement.elseStatement) {
-        const elseStatements = (statement.elseStatement as Block).statements;
-        const { nodes: elseNodes, edges: elseEdges, lastNodes: elseLastNodes } = generateCFG(elseStatements);
+        const { nodes: elseNodes, edges: elseEdges, lastNodes: elseLastNodes } = generateCFG(statement.elseStatement);
 
         if (elseNodes.length) {
           nodes.push(...elseNodes);
@@ -382,8 +395,7 @@ export function generateCFG(statements: NodeArray<Statement> | undefined): {
     condition: Expression,
     { onBodyNodes }: { onBodyNodes?: (nodes: CFGNode[]) => void } = {}
   ) {
-    const bodyStatements = (statement.statement as Block).statements;
-    const { nodes: bodyNodes, edges: bodyEdges, lastNodes: bodyLastNodes } = generateCFG(bodyStatements);
+    const { nodes: bodyNodes, edges: bodyEdges, lastNodes: bodyLastNodes } = generateCFG(statement.statement);
 
     if (bodyNodes.length) {
       onBodyNodes?.(bodyNodes);
