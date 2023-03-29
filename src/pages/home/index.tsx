@@ -24,11 +24,10 @@ export function HomePage() {
   const mermaidCode = useMemo(() => {
     const ast = createSourceFile('./src/index.ts', code, ScriptTarget.ES2016, true, ScriptKind.JS);
 
-    console.log(ast.statements);
-
     function drawCFG({ nodes, edges, lastNodes }: CFGData): string {
       let mermaidCode = '';
       nodes.forEach((node) => {
+        node.text = node.text.replaceAll('"', "'");
         if (isCFGBlock(node)) {
           mermaidCode += `state "${node.text}" as ${node._id}{\n`;
           mermaidCode += drawCFG(node.children);
@@ -104,7 +103,7 @@ export function HomePage() {
           </div>
         </div>
         <div className="h-full overflow-y-auto bg-white lg:h-screen">
-          <ErrorBoundary>
+          <ErrorBoundary key={mermaidCode}>
             <Mermaid chart={mermaidCode} />
           </ErrorBoundary>
         </div>

@@ -1,15 +1,11 @@
 import { first, Subject } from 'rxjs';
 import {
-  Block,
-  createNodeArray,
   DoStatement,
   Expression,
-  ExpressionStatement,
   factory,
   ForInStatement,
   ForOfStatement,
   ForStatement,
-  isBlock,
   isBreakStatement,
   isContinueStatement,
   isDoStatement,
@@ -93,6 +89,7 @@ export function generateCFG(astNode: Node | undefined): {
 
   for (let index = 0; index < statements.length; index++) {
     const statement = statements[index];
+    if (!statement.getText()) continue;
 
     lastNodes = lastNodes.filter((lastNode) => lastNode.type !== LastNodeType.Normal);
 
@@ -103,7 +100,7 @@ export function generateCFG(astNode: Node | undefined): {
 
       nodes.push({
         _id: nodeId,
-        text: expression.getText()?.replaceAll('"', "'"),
+        text: expression.getText(),
       });
 
       nextNodeId$.next(nodeId);
@@ -119,7 +116,9 @@ export function generateCFG(astNode: Node | undefined): {
     if (isFunctionDeclaration(statement) && statement.body) {
       const block: CFGBlock = {
         _id: nodeId,
-        text: `function ${statement.name?.escapedText}`,
+        text: `function ${statement.name?.escapedText}(${statement.parameters
+          .map((p) => p.name.getFullText())
+          .join(', ')})`,
         children: generateCFG(statement.body),
       };
 
@@ -137,9 +136,22 @@ export function generateCFG(astNode: Node | undefined): {
     if (isIfStatement(statement)) {
       nodes.push({
         _id: nodeId,
-        text: 'if: ' + statement.expression.getText()?.replaceAll('"', "'"),
+        text: `if (${statement.expression.getText()})`,
       });
       nextNodeId$.next(nodeId);
+
+      const endNodeId = `${nodeId}end`;
+      nodes.push({
+        _id: endNodeId,
+        text: `end-if`,
+      });
+      lastNodes.push({ _id: endNodeId, type: LastNodeType.Normal });
+      nextNodeId$.pipe(first()).subscribe((nextId) => {
+        edges.push({
+          begin: endNodeId,
+          end: nextId,
+        });
+      });
 
       const { nodes: thenNodes, edges: thenEdges, lastNodes: thenLastNodes } = generateCFG(statement.thenStatement);
 
@@ -151,25 +163,20 @@ export function generateCFG(astNode: Node | undefined): {
           end: thenNodes[0]._id,
         });
 
-        nextNodeId$.pipe(first()).subscribe((nextId) => {
-          if (!statement.elseStatement) {
-            edges.push({
-              begin: nodeId,
-              end: nextId,
-            });
-          }
-          thenLastNodes.forEach((thenLastNode) => {
-            if (thenLastNode.type !== LastNodeType.Normal) return;
-            edges.push({
-              begin: thenLastNode._id,
-              end: nextId,
-            });
+        if (!statement.elseStatement) {
+          edges.push({
+            begin: nodeId,
+            end: endNodeId,
+          });
+        }
+        thenLastNodes.forEach((thenLastNode) => {
+          if (thenLastNode.type !== LastNodeType.Normal) return;
+          edges.push({
+            begin: thenLastNode._id,
+            end: endNodeId,
           });
         });
-        if (!statement.elseStatement) {
-          lastNodes.push({ _id: nodeId, type: LastNodeType.Normal });
-        }
-        lastNodes.push(...thenLastNodes);
+        lastNodes.push(...thenLastNodes.filter((thenLastNode) => thenLastNode.type !== LastNodeType.Normal));
       }
 
       if (statement.elseStatement) {
@@ -182,18 +189,18 @@ export function generateCFG(astNode: Node | undefined): {
             begin: nodeId,
             end: elseNodes[0]._id,
           });
-          nextNodeId$.pipe(first()).subscribe((nextId) => {
-            elseLastNodes.forEach((elseLastNode) => {
-              if (elseLastNode.type !== LastNodeType.Normal) return;
-              edges.push({
-                begin: elseLastNode._id,
-                end: nextId,
-              });
+
+          elseLastNodes.forEach((elseLastNode) => {
+            if (elseLastNode.type !== LastNodeType.Normal) return;
+            edges.push({
+              begin: elseLastNode._id,
+              end: endNodeId,
             });
           });
-          lastNodes.push(...elseLastNodes);
+          lastNodes.push(...elseLastNodes.filter((elseLastNode) => elseLastNode.type !== LastNodeType.Normal));
         }
       }
+
       continue;
     }
     if (isForStatement(statement)) {
@@ -201,7 +208,7 @@ export function generateCFG(astNode: Node | undefined): {
       if (!initializer) continue;
       nodes.push({
         _id: initializer.pos.toString(),
-        text: 'for: ' + statement.initializer?.getText()?.replaceAll('"', "'") ?? '',
+        text: `(for initializer) ${statement.initializer?.getText()}`,
       });
       nextNodeId$.next(initializer.pos.toString());
 
@@ -209,7 +216,7 @@ export function generateCFG(astNode: Node | undefined): {
       if (!condition) continue;
       nodes.push({
         _id: condition.pos.toString(),
-        text: 'for cond: ' + statement.condition?.getText()?.replaceAll('"', "'") ?? '',
+        text: `for (${statement.condition?.getText()})`,
       });
       edges.push({
         begin: initializer.pos.toString(),
@@ -220,7 +227,7 @@ export function generateCFG(astNode: Node | undefined): {
       if (!incrementor) continue;
       nodes.push({
         _id: incrementor.pos.toString(),
-        text: 'for inc: ' + statement.incrementor?.getText()?.replaceAll('"', "'") ?? '',
+        text: `(for incrementor) ${statement.incrementor?.getText()}`,
       });
       edges.push({
         begin: condition.pos.toString(),
@@ -235,6 +242,23 @@ export function generateCFG(astNode: Node | undefined): {
           });
         },
       });
+
+      const endNodeId = `${nodeId}end`;
+      nodes.push({
+        _id: endNodeId,
+        text: `end-for`,
+      });
+
+      lastNodes = lastNodes.filter((lastNode) => lastNode.type !== LastNodeType.Normal);
+      lastNodes.push({ _id: endNodeId, type: LastNodeType.Normal });
+      nextNodeId$.next(endNodeId);
+      nextNodeId$.pipe(first()).subscribe((nextId) => {
+        edges.push({
+          begin: endNodeId,
+          end: nextId,
+        });
+      });
+
       continue;
     }
     if (isWhileStatement(statement)) {
@@ -242,7 +266,7 @@ export function generateCFG(astNode: Node | undefined): {
       if (!condition) continue;
       nodes.push({
         _id: condition.pos.toString(),
-        text: 'while: ' + statement.expression?.getText()?.replaceAll('"', "'") ?? '',
+        text: `while (${statement.expression?.getText()})`,
       });
       nextNodeId$.next(condition.pos.toString());
 
@@ -253,6 +277,21 @@ export function generateCFG(astNode: Node | undefined): {
             end: bodyNodes[0]._id,
           });
         },
+      });
+
+      const endNodeId = `${nodeId}end`;
+      nodes.push({
+        _id: endNodeId,
+        text: `end-while`,
+      });
+      lastNodes = lastNodes.filter((lastNode) => lastNode.type !== LastNodeType.Normal);
+      lastNodes.push({ _id: endNodeId, type: LastNodeType.Normal });
+      nextNodeId$.next(endNodeId);
+      nextNodeId$.pipe(first()).subscribe((nextId) => {
+        edges.push({
+          begin: endNodeId,
+          end: nextId,
+        });
       });
 
       continue;
@@ -267,7 +306,7 @@ export function generateCFG(astNode: Node | undefined): {
       });
       nodes.push({
         _id: condition.pos.toString(),
-        text: 'do while: ' + statement.expression?.getText()?.replaceAll('"', "'") ?? '',
+        text: `while (${statement.expression?.getText()})`,
       });
       edges.push({
         begin: condition.pos.toString(),
@@ -291,11 +330,7 @@ export function generateCFG(astNode: Node | undefined): {
       nextNodeId$.next(expression.pos.toString());
       nodes.push({
         _id: expression.pos.toString(),
-        text:
-          'for: ' +
-            statement.initializer?.getText()?.replaceAll('"', "'") +
-            ' in ' +
-            statement.expression?.getText()?.replaceAll('"', "'") ?? '',
+        text: `for (${statement.initializer?.getText()} in ${statement.expression?.getText()})`,
       });
 
       solveLoop(statement, expression, {
@@ -305,6 +340,21 @@ export function generateCFG(astNode: Node | undefined): {
             end: bodyNodes[0]._id,
           });
         },
+      });
+
+      const endNodeId = `${nodeId}end`;
+      nodes.push({
+        _id: endNodeId,
+        text: `end-for`,
+      });
+      lastNodes = lastNodes.filter((lastNode) => lastNode.type !== LastNodeType.Normal);
+      lastNodes.push({ _id: endNodeId, type: LastNodeType.Normal });
+      nextNodeId$.next(endNodeId);
+      nextNodeId$.pipe(first()).subscribe((nextId) => {
+        edges.push({
+          begin: endNodeId,
+          end: nextId,
+        });
       });
       continue;
     }
@@ -314,11 +364,7 @@ export function generateCFG(astNode: Node | undefined): {
       nextNodeId$.next(expression.pos.toString());
       nodes.push({
         _id: expression.pos.toString(),
-        text:
-          'for: ' +
-            statement.initializer?.getText()?.replaceAll('"', "'") +
-            ' of ' +
-            statement.expression?.getText()?.replaceAll('"', "'") ?? '',
+        text: `for (${statement.initializer?.getText()} of ${statement.expression?.getText()})`,
       });
 
       solveLoop(statement, expression, {
@@ -328,6 +374,21 @@ export function generateCFG(astNode: Node | undefined): {
             end: bodyNodes[0]._id,
           });
         },
+      });
+
+      const endNodeId = `${nodeId}end`;
+      nodes.push({
+        _id: endNodeId,
+        text: `end-for`,
+      });
+
+      lastNodes.push({ _id: endNodeId, type: LastNodeType.Normal });
+      nextNodeId$.next(endNodeId);
+      nextNodeId$.pipe(first()).subscribe((nextId) => {
+        edges.push({
+          begin: endNodeId,
+          end: nextId,
+        });
       });
       continue;
     }
@@ -354,7 +415,7 @@ export function generateCFG(astNode: Node | undefined): {
     if (isReturnStatement(statement)) {
       nodes.push({
         _id: nodeId,
-        text: statement.getText()?.replaceAll('"', "'"),
+        text: statement.getText(),
       });
       nextNodeId$.next(nodeId);
 
@@ -364,7 +425,7 @@ export function generateCFG(astNode: Node | undefined): {
     if (isThrowStatement(statement)) {
       nodes.push({
         _id: nodeId,
-        text: statement.getText()?.replaceAll('"', "'"),
+        text: statement.getText(),
       });
       nextNodeId$.next(nodeId);
 
@@ -374,7 +435,7 @@ export function generateCFG(astNode: Node | undefined): {
 
     nodes.push({
       _id: nodeId,
-      text: statement.getText()?.replaceAll('"', "'"),
+      text: statement.getText(),
     });
 
     nextNodeId$.next(nodeId);

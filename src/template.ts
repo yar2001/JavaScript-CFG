@@ -9,7 +9,15 @@ function foo2() {
 }
 
 foo();`,
-
+  'for-loop': `// For loop
+function foo() {
+    console.log('Hello JavaScript!');
+    for (let a = 0; a < 10; a++) {
+        console.log('Hello For Loop!');
+    }
+    console.log('Goodbye For loop!');
+}
+foo();`,
   'while-loop': `// While loop with continue and break
 function foo() {
     console.log('Hello JavaScript!');
