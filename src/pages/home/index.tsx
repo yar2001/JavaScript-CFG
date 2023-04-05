@@ -25,35 +25,36 @@ export function HomePage() {
   const [lang, setLang] = useState('javascript');
 
   const mermaidCode = useMemo(() => {
+    function drawCFG({ nodes, edges, lastNodes }: CFGData): string {
+      let mermaidCode = '';
+      nodes.forEach((node) => {
+        node.text = node.text.replaceAll('"', "'");
+        if (isCFGBlock(node)) {
+          mermaidCode += `state "${node.text}" as ${node._id}{\n`;
+          mermaidCode += drawCFG(node.children);
+          mermaidCode += '\n}\n';
+          return;
+        }
+        mermaidCode += `state "${node.text}" as ${node._id}\n`;
+      });
+
+      edges.forEach((edge) => {
+        mermaidCode += `${edge.begin}-->${edge.end}\n`;
+      });
+      if (nodes.length) {
+        mermaidCode += `[*]-->${nodes[0]._id}\n`;
+      }
+      lastNodes.forEach((node) => {
+        mermaidCode += `${node._id}-->[*]\n`;
+      });
+
+      return mermaidCode;
+    }
+    
     switch (lang) {
       case 'javascript':
         const ast = createSourceFile('./src/index.ts', code, ScriptTarget.ES2016, true, ScriptKind.JS);
 
-        function drawCFG({ nodes, edges, lastNodes }: CFGData): string {
-          let mermaidCode = '';
-          nodes.forEach((node) => {
-            node.text = node.text.replaceAll('"', "'");
-            if (isCFGBlock(node)) {
-              mermaidCode += `state "${node.text}" as ${node._id}{\n`;
-              mermaidCode += drawCFG(node.children);
-              mermaidCode += '\n}\n';
-              return;
-            }
-            mermaidCode += `state "${node.text}" as ${node._id}\n`;
-          });
-
-          edges.forEach((edge) => {
-            mermaidCode += `${edge.begin}-->${edge.end}\n`;
-          });
-          if (nodes.length) {
-            mermaidCode += `[*]-->${nodes[0]._id}\n`;
-          }
-          lastNodes.forEach((node) => {
-            mermaidCode += `${node._id}-->[*]\n`;
-          });
-
-          return mermaidCode;
-        }
         const cfg = generateCFG(ast);
         const mermaid = 'stateDiagram-v2\n' + drawCFG(cfg);
         return mermaid;
@@ -61,12 +62,13 @@ export function HomePage() {
         try {
           return 'stateDiagram-v2\n' + drawCFG(JSON.parse(code));
         } catch (e) {
-          return '';
+          console.error(e);
+          return 'stateDiagram-v2\n';
         }
       case 'mermaid':
         return code;
       default:
-        return '';
+        return 'stateDiagram-v2\n';
     }
   }, [code, lang]);
 

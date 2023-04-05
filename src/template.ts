@@ -132,8 +132,7 @@ export const defaultCFGData = `{
   ],
   "edges": [{ "begin": "0", "end": "377" }],
   "lastNodes": [{ "_id": "377", "type": "normal" }]
-}
-`;
+}`;
 
 export const defaultMermaid =
   'stateDiagram-v2\nstate "function foo()" as 0{\nstate "console.log(\'Hello JavaScript!\')" as 16\nstate "let a = 0;" as 54\nstate "do" as 69\nstate "while (a <= 10)" as 295\nstate "console.log(\'Hello Do While loop!\')" as 78\nstate "a++" as 123\nstate "if (a === 5)" as 136\nstate "end-if" as 136end\nstate "a = 6" as 159\nstate "continue" as 178\nstate "if (a === 9)" as 210\nstate "end-if" as 210end\nstate "a = 0" as 233\nstate "break" as 252\nstate "console.log(\'Goodbye Do While loop!\')" as 303\n16-->54\n295-->69\n54-->69\n69-->78\n78-->123\n123-->136\n159-->178\n136-->159\n136-->136end\n136end-->210\n233-->252\n210-->233\n210-->210end\n178-->295\n210end-->295\n252-->303\n295-->303\n[*]-->16\n303-->[*]\n\n}\nstate "foo()" as 348\n0-->348\n[*]-->0\n348-->[*]\n';
