@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Selector } from './Selector';
-import { defaultCode } from './template';
+import { defaultJavaScript } from './template';
 
 export function TemplateSelector({ onSelect }: { onSelect(name: string): void }) {
-  const [value, setValue] = useState(Object.keys(defaultCode)[0]);
+  const [value, setValue] = useState(Object.keys(defaultJavaScript)[0]);
   return (
     <Selector
       name="Template"
       value={value}
-      data={Object.keys(defaultCode).map((name) => ({ title: name, key: name }))}
+      data={Object.keys(defaultJavaScript).map((name) => ({ title: name, key: name }))}
       onChange={(name) => {
         onSelect(name);
         setValue(name);

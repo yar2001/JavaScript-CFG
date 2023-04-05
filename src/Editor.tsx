@@ -7,7 +7,8 @@ export default function CodeEditor({
   onChange,
   command$,
   noSemanticValidation = false,
-  extraLibs = [],
+  extraLibs,
+  language = 'javascript',
 }: {
   value: string;
   onChange(code: string): void;
@@ -17,10 +18,10 @@ export default function CodeEditor({
     content: string;
     filePath?: string;
   }[];
+  language?: string;
 }) {
   const divRef = useRef<HTMLDivElement>(null);
   const [editor, setEditor] = useState<monaco.editor.IStandaloneCodeEditor>();
-  const [isEdit, setIsEdit] = useState(false);
 
   const formatCode = useCallback(() => {
     if (!editor) return;
@@ -62,9 +63,6 @@ export default function CodeEditor({
         case 'dayTheme':
           setDarkMode(false);
           break;
-        case 'forceUpdateCode':
-          setIsEdit(false);
-          break;
       }
     });
     return () => {
@@ -73,9 +71,9 @@ export default function CodeEditor({
   }, [command$, formatCode, setDarkMode]);
 
   useEffect(() => {
-    if (isEdit) return;
+    if (getCode() === value) return;
     setCode(value);
-  }, [isEdit, setCode, value]);
+  }, [getCode, setCode, value]);
 
   useEffect(() => {
     if (!divRef.current) return;
@@ -91,7 +89,7 @@ export default function CodeEditor({
       allowNonTsExtensions: true,
       noImplicitAny: false,
     });
-    monaco.languages.typescript.javascriptDefaults.setExtraLibs(extraLibs);
+    monaco.languages.typescript.javascriptDefaults.setExtraLibs(extraLibs ?? []);
     monaco.editor.defineTheme('custom', {
       base: 'vs',
       inherit: true,
@@ -102,7 +100,7 @@ export default function CodeEditor({
     });
     editor = monaco.editor.create(divRef.current, {
       value: '',
-      language: 'javascript',
+      language,
       automaticLayout: true,
       minimap: {
         enabled: false,
@@ -113,19 +111,17 @@ export default function CodeEditor({
       lineNumbersMinChars: 3,
       theme: 'custom',
     });
-    setIsEdit(false);
+
     setEditor(editor);
     return () => {
       editor.dispose();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [extraLibs, language, noSemanticValidation]);
 
   useEffect(() => {
     const model = editor?.getModel();
     if (!model) return;
     const sub = model.onDidChangeContent(() => {
-      setIsEdit(true);
       onChange?.(getCode() ?? '');
     });
     return () => {
