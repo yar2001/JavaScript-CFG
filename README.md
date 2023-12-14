@@ -1,30 +1,10 @@
-# Getting Started
+# JavaScript CFG
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A tool that generates Control Flow Graphs (CFGs) of JavaScript and TypeScript code. It uses TypeScript as a parser to handle both languages and produce CFGs. The project was developed as my undergraduate graduation project.
 
-## Available Scripts
+## Preview
 
-In the project directory, you can run:
+![image](https://github.com/yar2001/JavaScript-CFG/assets/20311434/39a0bb61-3c99-48a0-abc8-ed39973d39f8)
 
-### `npm start`
-
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Link
+https://yar2001.github.io/JavaScript-CFG/
